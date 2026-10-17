@@ -139,6 +139,44 @@ tdScore = function (p) {
     ({RB: 2, WR: 1.2, TE: 1, QB: 0.8}[p.position] || 0);
 };
 
+/* PropEdge Daily: fix common TD board names and positions */
+function tdName(p) {
+  const n = String(p.player || "").trim();
+  if (/^gibbs$/i.test(n)) return "Jahmyr Gibbs";
+  return n;
+}
+
+function tdPosition(p) {
+  const n = tdName(p).toLowerCase();
+  if (n === "jahmyr gibbs") return "RB";
+  if (n === "sam laporta") return "TE";
+  if (n === "jared goff") return "QB";
+  return p.position || "Other";
+}
+
+const originalRenderTd = renderTd;
+
+renderTd = function () {
+  const original = tds;
+  const seen = new Set();
+
+  tds = original.filter(p => {
+    const key = tdName(p).toLowerCase() + "|" +
+      String(p.team || "").trim().toUpperCase();
+
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  }).map(p => ({
+    ...p,
+    player: tdName(p),
+    position: tdPosition(p)
+  }));
+
+  originalRenderTd();
+  tds = original;
+};
+
 renderProps();renderTd();loadSchedule();
 </script></body></html>
 
